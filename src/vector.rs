@@ -1327,11 +1327,11 @@ mod test {
 
     #[test]
     fn compile_time_test_is_send() -> () {
-        let _vector: Box<Send> = Box::new(Vector::<i32>::new());
+        let _: Box<Send> = Box::new(Vector::<i32>::new());
     }
 
     #[test]
     fn compile_time_test_is_sync() -> () {
-        let _vector: Box<Sync> = Box::new(Vector::<i32>::new());
+        let _: Box<Sync> = Box::new(Vector::<i32>::new());
     }
 }

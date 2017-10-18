@@ -32,7 +32,7 @@ enum IndexMapping {
 impl<T> BiVector<T> {
     pub fn new() -> BiVector<T> {
         BiVector {
-            left: Vector::new(),
+            left:  Vector::new(),
             right: Vector::new(),
         }
     }
@@ -41,7 +41,7 @@ impl<T> BiVector<T> {
         assert!(bits > 0, "Number of bits for the bivector must be positive");
 
         BiVector {
-            left: Vector::new_with_bits(bits),
+            left:  Vector::new_with_bits(bits),
             right: Vector::new_with_bits(bits),
         }
     }
@@ -120,9 +120,114 @@ impl<T> BiVector<T> {
         self.left.len() + self.right.len()
     }
 
-    /* WIP
-    pub fn iter(&self) -> Iter<T> {
-        unimplemented!()
+    /*
+    pub fn iter(&self) -> impl Iterator<Item=T> {
+        let x = self.left.iter().rev().chain(self.right.iter());
+
+        x.le
+
+        x
     }
     */
+}
+
+// WIP test iterator is exact size and is doubleended.
+
+pub struct Iter<T> {
+    x: T
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_first_last() -> () {
+        let bivector: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_front(-1)
+            .push_back(2)
+            .push_front(-2);
+        let bivector_only_left: BiVector<i32> = BiVector::new()
+            .push_front(-1)
+            .push_front(-2);
+        let bivector_only_right: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_back(2);
+
+        assert_eq!(bivector.first(), Some(&-2));
+        assert_eq!(bivector.last(), Some(&2));
+
+        assert_eq!(bivector_only_left.first(), Some(&-2));
+        assert_eq!(bivector_only_left.last(), Some(&-1));
+
+        assert_eq!(bivector_only_right.first(), Some(&0));
+        assert_eq!(bivector_only_right.last(), Some(&2));
+    }
+
+    #[test]
+    fn test_get() -> () {
+        let bivector: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_front(-1)
+            .push_back(2)
+            .push_front(-2);
+        let bivector_only_left: BiVector<i32> = BiVector::new()
+            .push_front(-1)
+            .push_front(-2);
+        let bivector_only_right: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_back(2);
+
+        assert_eq!(bivector.get(0), Some(&-2));
+        assert_eq!(bivector.get(1), Some(&-1));
+        assert_eq!(bivector.get(3), Some(&1));
+        assert_eq!(bivector.get(4), Some(&2));
+        assert_eq!(bivector.get(5), None);
+
+        assert_eq!(bivector_only_left.get(0), Some(&-2));
+        assert_eq!(bivector_only_left.get(1), Some(&-1));
+        assert_eq!(bivector_only_left.get(2), None);
+
+        assert_eq!(bivector_only_right.get(0), Some(&0));
+        assert_eq!(bivector_only_right.get(1), Some(&1));
+        assert_eq!(bivector_only_right.get(2), Some(&2));
+        assert_eq!(bivector_only_right.get(3), None);
+    }
+
+    #[test]
+    fn test_set() -> () {
+        let bivector: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_front(-1)
+            .push_back(2)
+            .push_front(-2);
+        let bivector_only_left: BiVector<i32> = BiVector::new()
+            .push_front(-1)
+            .push_front(-2);
+        let bivector_only_right: BiVector<i32> = BiVector::new()
+            .push_back(0)
+            .push_back(1)
+            .push_back(2);
+
+        assert_eq!(bivector.set(0, 10).unwrap().get(0), Some(&10));
+        assert_eq!(bivector.set(1, 11).unwrap().get(1), Some(&11));
+        assert_eq!(bivector.set(3, 13).unwrap().get(3), Some(&13));
+        assert_eq!(bivector.set(4, 14).unwrap().get(4), Some(&14));
+        assert!(bivector.set(5, 0).is_none());
+
+        assert_eq!(bivector_only_left.set(0, 10).unwrap().get(0), Some(&10));
+        assert_eq!(bivector_only_left.set(1, 11).unwrap().get(1), Some(&11));
+        assert!(bivector_only_left.set(2, 0).is_none());
+
+        assert_eq!(bivector_only_right.set(0, 10).unwrap().get(0), Some(&10));
+        assert_eq!(bivector_only_right.set(1, 11).unwrap().get(1), Some(&11));
+        assert_eq!(bivector_only_right.set(2, 12).unwrap().get(2), Some(&12));
+        assert!(bivector_only_right.set(3, 0).is_none());
+    }
 }
