@@ -87,19 +87,20 @@ impl<T> BiVector<T> {
     }
 
     pub fn set(&self, index: usize, v: T) -> Option<BiVector<T>> {
-        match self.index_mapping(index) {
-            Some(IndexMapping::Left(i))  =>
-                Some(BiVector {
-                    left:  self.left.set(i, v).unwrap(),
-                    right: self.right.clone(),
-                }),
-            Some(IndexMapping::Right(i)) =>
-                Some(BiVector {
-                    left:  self.left.clone(),
-                    right: self.right.set(i, v).unwrap(),
-                }),
-            None => None,
-        }
+        self.index_mapping(index).map(|index_mapping| {
+            match index_mapping {
+                IndexMapping::Left(i)  =>
+                    BiVector {
+                        left:  self.left.set(i, v).unwrap(),
+                        right: self.right.clone(),
+                    },
+                IndexMapping::Right(i) =>
+                    BiVector {
+                        left:  self.left.clone(),
+                        right: self.right.set(i, v).unwrap(),
+                    },
+            }
+        })
     }
 
     pub fn push_back(&self, v: T) -> BiVector<T> {
@@ -123,19 +124,17 @@ impl<T> BiVector<T> {
     /*
     pub fn iter(&self) -> impl Iterator<Item=T> {
         let x = self.left.iter().rev().chain(self.right.iter());
-
-        x.le
-
-        x
     }
     */
 }
 
 // WIP test iterator is exact size and is doubleended.
 
+/*
 pub struct Iter<T> {
     x: T
 }
+*/
 
 #[cfg(test)]
 mod test {
