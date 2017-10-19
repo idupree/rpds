@@ -645,10 +645,8 @@ impl<'a, T> Iter<'a, T> {
     #[inline(always)]
     fn current_backward(&mut self) -> Option<&'a T> {
         if self.non_empty() {
-            println!("ok");
             Iter::current(self.stack_backward.as_mut().unwrap())
         } else {
-            println!("cant be");
             None
         }
     }
@@ -1118,7 +1116,6 @@ mod test {
 
         assert_eq!(left, 0);
     }
-
 
     #[test]
     fn test_iter_backwards() -> () {
