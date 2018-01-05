@@ -10,6 +10,15 @@ use std::hash::{Hasher, Hash};
 use std::borrow::Borrow;
 use std::iter::FromIterator;
 
+#[cfg(feature = "serde")]
+use serde::ser::{Serialize, Serializer, SerializeSeq};
+#[cfg(feature = "serde")]
+use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+#[cfg(feature = "serde")]
+use std::marker::PhantomData;
+#[cfg(feature = "serde")]
+use std::fmt;
+
 // TODO Use impl trait instead of this when available.
 pub type Iter<'a, T> = ::std::iter::Map<IterArc<'a, T>, fn(&Arc<T>) -> &T>;
 
@@ -266,6 +275,64 @@ impl<'a, T> Iterator for IterArc<'a, T> {
 }
 
 impl<'a, T> ExactSizeIterator for IterArc<'a, T> {}
+
+#[cfg(feature = "serde")]
+impl<A> Serialize for List<A> where A: Serialize {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_seq(Some(self.len()))?;
+        for item in self {
+            state.serialize_element(&item)?;
+        }
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, A> Deserialize<'de> for List<A> where A: Deserialize<'de> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_seq(ListVisitor{phantom: PhantomData})
+    }
+}
+
+#[cfg(feature = "serde")]
+struct ListVisitor<A> {
+    phantom: PhantomData<A>
+}
+
+#[cfg(feature = "serde")]
+impl<'de, A> Visitor<'de> for ListVisitor<A>
+where A: Deserialize<'de>,
+{
+    type Value = List<A>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a sequence")
+    }
+
+    fn visit_seq<B>(self, mut seq: B) -> Result<Self::Value, B::Error>
+        where
+            B: SeqAccess<'de>,
+    {
+        let mut vec: Vec<A> = if let Some(capacity) = seq.size_hint() {
+                Vec::with_capacity(capacity)
+            } else {
+                Vec::new()
+            };
+
+        while let Some(value) = seq.next_element()? {
+            vec.push(value);
+        }
+
+        let mut list: List<A> = List::new();
+
+        for value in vec.into_iter().rev() {
+            list = list.push_front(value);
+        }
+
+        Ok(list)
+    }
+}
+
 
 #[cfg(test)]
 mod test;
