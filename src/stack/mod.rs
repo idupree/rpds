@@ -10,6 +10,11 @@ use std::fmt::Display;
 use sequence::list;
 use List;
 
+#[cfg(feature = "serde")]
+use serde::ser::{Serialize, Serializer, SerializeSeq};
+#[cfg(feature = "serde")]
+use serde::de::{Deserialize, Deserializer};
+
 // TODO Use impl trait for return value when available
 pub type Iter<'a, T> = list::Iter<'a, T>;
 
@@ -152,6 +157,28 @@ impl<T> FromIterator<T> for Stack<T> {
         }
     }
 }
+
+#[cfg(feature = "serde")]
+impl<A> Serialize for Stack<A> where A: Serialize {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_seq(Some(self.list.len()))?;
+        for item in self {
+            state.serialize_element(&item)?;
+        }
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, A> Deserialize<'de> for Stack<A> where A: Deserialize<'de> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let list: List<A> = Deserialize::deserialize(deserializer)?;
+        Ok(Stack {
+            list: list,
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod test;
